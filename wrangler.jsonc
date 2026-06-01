@@ -2,9 +2,5 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tu-coach-charles-app",
   "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "dist/server/server.js",
-  "assets": {
-    "directory": "dist/client"
-  }
+  "pages_build_output_dir": "dist"
 }
