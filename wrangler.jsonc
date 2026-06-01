@@ -2,5 +2,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tu-coach-charles-app",
   "compatibility_date": "2025-09-24",
-  "pages_build_output_dir": "dist"
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "dist/server/server.js",
+  "assets": {
+    "directory": "dist/client"
+  },
+  "vars": {
+    "VITE_SUPABASE_URL": "https://dyeksbdszkeljrxydacg.supabase.co",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_Gsh19ZjLMShDT94ffBmOUg_mr-o2Vpl"
+  }
 }
