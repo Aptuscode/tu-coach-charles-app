@@ -1,8 +1,10 @@
 import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Dumbbell, Apple, CreditCard, MessageSquare, LogOut, Users, ListPlus, Megaphone, Send, BookOpen } from "lucide-react";
+import { Home, Dumbbell, Apple, CreditCard, MessageSquare, LogOut, Users, ListPlus, Megaphone, Send, BookOpen, Lock } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; }
 
@@ -11,11 +13,59 @@ export function AppLayout({ items, title }: { items: NavItem[]; title: string })
   const { signOut, user } = useAuth();
   const nav = useNavigate();
 
+  // 🛡️ EL GUARDIA DE SEGURIDAD: Consultamos si el usuario está bloqueado/pendiente
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile-status", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("blocked")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const handleLogout = async () => {
     await signOut();
     nav({ to: "/" });
   };
 
+  // Pantalla de carga mientras el guardia revisa
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // 🔒 LA SALA DE ESPERA: Si está bloqueado, no renderiza el contenido de la app
+  if (profile?.blocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
+        <img src={logo} alt="Logo Tu Coach" className="h-20 mb-8 drop-shadow-md" width={80} height={80} />
+        <div className="bg-card p-8 rounded-2xl shadow-deep max-w-md w-full border border-border/60">
+          <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-3">Cuenta en Revisión</h2>
+          <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
+            Tu registro se ha completado. Un administrador de <strong>Tu Coach Charles Isaac</strong> está revisando tu solicitud. Te daremos acceso en cuanto tu cuenta sea aprobada.
+          </p>
+          <Button onClick={handleLogout} variant="default" className="w-full font-semibold">
+            <LogOut className="h-4 w-4 mr-2" /> Salir por ahora
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no está bloqueado, lo dejamos pasar a la app normal
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
       {/* Desktop sidebar */}
